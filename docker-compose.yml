@@ -1,0 +1,46 @@
+version: "3.9"
+   
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=capstone_db
+      - POSTGRES_USER=zm412
+      - POSTGRES_PASSWORD=tazhbaeva1
+  frontend:
+    restart: always
+    build:
+      context: ./expressapp/frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "6000:6000"
+    stdin_open: true
+    command: npm run dev 
+    environment:
+      - NODE_ENV=development
+    volumes:
+      #- ./expressapp/frontend:/code/
+      - ./expressapp/public/:/code/public/
+      #- /code/dist/
+      #- ./djangoapp/frontend/dist:/djangoapp/frontend/dist
+      #- ./djangoapp/frontend:/djangoapp/frontend
+      # One-way volume to use node_modules from inside image
+      - /code/node_modules
+    depends_on:
+      - backend 
+
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    stdin_open: true
+    command: npm run dev 
+    volumes:
+      - ./expressapp:/code/
+      - ./expressapp/public:/code/public/
+      - /code/node_modules
+    depends_on:
+      - db
+
