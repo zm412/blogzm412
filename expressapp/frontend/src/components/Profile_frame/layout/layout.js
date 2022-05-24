@@ -15,10 +15,7 @@ export const Layout = () => {
   const [user, setUser] = useState("");
   const [registerMode, setRegisterMode] = useState(false);
   const [loginMode, setLoginMode] = useState(false);
-  const [token, setToken] = useState("");
-  console.log(user, "user");
-  console.log(token, "token");
-  console.log(registerMode, "registermode");
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
   const getUser = (user_info) => {
     setUser(user_info);

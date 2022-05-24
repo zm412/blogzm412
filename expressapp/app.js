@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
 const { check, validationResult } = require("express-validator");
+var fileUpload = require("express-fileupload");
 const bcrypt = require("bcryptjs");
 const express = require("express");
 const dotenv = require("dotenv");
@@ -32,6 +33,10 @@ const User = sequelize.define("user", {
   },
 });
 
+const Post = sequelize.define("post", {
+  post_text: Sequelize.STRING,
+});
+
 sequelize
   .sync()
   .then((result) => {
@@ -57,6 +62,7 @@ function generateAccessToken(username) {
   return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: "1800s" });
 }
 
+app.use(fileUpload({}));
 app.use(express.static(path.join(__dirname, "./public")));
 app.use(bodyParser.json());
 app.set("views", path.join(__dirname, "views"));
@@ -65,22 +71,6 @@ app.set("view engine", "html");
 
 app.get("/", (req, res) => res.render("index"));
 
-app.post("/create_one", (req, res) => {
-  const { username, email, password } = req.body;
-
-  User.create({ username, email, password: hashPassword })
-    .then((doc) => {
-      console.log(doc, "doc");
-      const user = {
-        username: doc.username,
-        elem: doc.elem,
-        password: doc.password,
-      };
-      console.log(user, "USER");
-      res.json(doc);
-    })
-    .catch((err) => console.log(err));
-});
 app.get("/get_all", (req, res) => {
   User.findAll({ raw: true })
     .then((users) => {
@@ -89,15 +79,13 @@ app.get("/get_all", (req, res) => {
     })
     .catch((err) => console.log(err, "err"));
 });
-/*
-User.destroy({
-  where: {
-    name: "Bob",
-  },
-}).then((res) => {
-  console.log(res);
+
+app.post("/add_post", (req, res) => {
+  console.log(req.body.postText, "REQ");
+  console.log(req.files.file_item, "files");
+
+  res.json("hello");
 });
-*/
 
 app.post("/login", async (req, res) => {
   console.log(req.body, "REQ");

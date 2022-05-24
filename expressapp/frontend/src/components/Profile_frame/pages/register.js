@@ -19,8 +19,6 @@ export const RegisterPage = ({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  console.log(localStorage.getItem("token"), "tokenStorage");
-
   const handleSubmit = (event) => {
     event.preventDefault();
     fetchDataPost("/register", { username, email, password })
@@ -33,7 +31,6 @@ export const RegisterPage = ({
           getUser(doc.user);
           funcBack();
         }
-        console.log(doc, "doc");
       })
       .catch((err) => console.log(err, "err"));
     console.log("Отправлена форма.");

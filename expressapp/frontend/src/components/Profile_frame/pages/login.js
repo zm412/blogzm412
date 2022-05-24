@@ -18,8 +18,6 @@ export const LoginPage = ({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  console.log(localStorage.getItem("token"), "tokenStorage");
-
   const handleSubmit = (event) => {
     event.preventDefault();
     fetchDataPost("/login", { email, password })
@@ -31,7 +29,6 @@ export const LoginPage = ({
           setTokenFunc(doc.token);
           getUser(doc.user);
         }
-        console.log(doc, "doc");
       })
       .catch((err) => console.log(err, "err"));
     console.log("Отправлена форма.");
