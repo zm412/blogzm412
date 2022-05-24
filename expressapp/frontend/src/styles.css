@@ -48,10 +48,6 @@
     display: block;
     background: rgba(123, 104, 238, 0.3);
   }
-
-  body {
-    background: url("./img26.jpg");
-  }
 }
 
 .info_block {
@@ -119,7 +115,7 @@
 
 body {
   margin: 0;
-  #background-color: whitesmoke;
+  background-color: whitesmoke;
   background-size: 100%;
   font-family: "Arial";
   color: blue;

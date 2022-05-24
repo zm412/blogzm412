@@ -40,6 +40,7 @@ sequelize
   .catch((err) => console.log(err, "err"));
 
 /*
+ 
 User.create({
   username: "Bob",
   password: "ddd",
@@ -89,6 +90,7 @@ app.post(
     ).isLength({ min: 3, max: 12 }),
   ],
   (req, res) => {
+    console.log(req.body, "REQBODY");
     const { username, email, password } = req.body;
     const candidate = User.findOne({ email });
     if (candidate) {
@@ -96,8 +98,24 @@ app.post(
         .status(400)
         .json({ message: `User with email ${email} already exist` });
     }
+    const hashPassword = bcrypt.hash(password, 8);
 
+    User.create({ username, email, password: hashPassword })
+      .then((doc) => {
+        const user = {
+          id: doc.id,
+          username: doc.username,
+          elem: doc.elem,
+          password: doc.password,
+        };
+        console.log(user, "USER");
+      })
+      .catch((err) => console.log(err));
+
+    //const user = new User({username, email, password: hashPassword})
+    //user.save()
     const token = generateAccessToken({ username: req.body.username });
+
     res.json(token);
   }
 );

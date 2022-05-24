@@ -10,7 +10,7 @@ COPY nodemon.json /code/nodemon.json
 
 COPY .babelrc /code/.babelrc 
 
-RUN npm install --silent
+RUN npm install
 
 COPY . /code
 
@@ -20,4 +20,4 @@ COPY .env /code/.env
 
 EXPOSE 6000
 
-CMD ["npm", "run", "dev"]
+#CMD ["npm", "run", "dev"]

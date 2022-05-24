@@ -1,32 +1,27 @@
-import React from 'react';
-import { Profile } from './Profile';
+import React from "react";
+//import { Profile } from "./Profile";
+import { LoginPage } from "./Profile_frame/pages/login.js";
+import { RegisterPage } from "./Profile_frame/pages/register.js";
+import { useState, useEffect } from "react";
 
+export const App = () => {
+  const [registerMode, setRegisterMode] = useState(false);
+  const [token, setToken] = useState(null);
 
-class App extends React.Component {
+  const registerOnHandler = () => setRegisterMode(true);
+  const getToken = (tk) => setToken(tk);
 
-  constructor() {
-    super();
-    this.state = {
-      //is_super: document.querySelector('#user_info').dataset.is_super.toLowerCase() || true,
-      is_super: "false",
-      //userid: document.querySelector('#user_info').dataset.userid || 0,
-      userid: 0,
-      //username: document.querySelector('#user_info').dataset.username || 'zm412',
-      username: 'zm412',
-    };
-  }
-   
-
-  render() {
-
-    return (
-
-      <div className="App-header">
-          <div><Profile is_super={ this.state.is_super } userid={this.state.userid} username={this.state.username} /></div>
+  return (
+    <div className="App-header">
+      <div>
+        {registerMode && !token ? (
+          <RegisterPage getToken={getToken} />
+        ) : (
+          <LoginPage registerOnFunc={registerOnHandler} />
+        )}
       </div>
-          
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default App;

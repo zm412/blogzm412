@@ -21,15 +21,13 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      #- ./expressapp/frontend:/code/
+      - ./expressapp/frontend:/code/
       - ./expressapp/public/:/code/public/
-      #- /code/dist/
+      - /code/public/
       #- ./djangoapp/frontend/dist:/djangoapp/frontend/dist
       #- ./djangoapp/frontend:/djangoapp/frontend
       # One-way volume to use node_modules from inside image
       - /code/node_modules
-    depends_on:
-      - backend 
 
   backend:
     build: .
@@ -43,4 +41,5 @@ services:
       - /code/node_modules
     depends_on:
       - db
+      - frontend 
 
