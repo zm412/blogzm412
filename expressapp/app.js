@@ -51,14 +51,8 @@ User.create({
   })
   .catch((err) => console.log(err));
 
-
-User.findAll({})
-  .then((users) => {
-    console.log(users);
-  })
-  .catch((err) => console.log(err));
-
   */
+
 function generateAccessToken(username) {
   return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: "1800s" });
 }
@@ -70,6 +64,31 @@ app.engine("html", require("hbs").__express);
 app.set("view engine", "html");
 
 app.get("/", (req, res) => res.render("index"));
+
+app.post("/create_one", (req, res) => {
+  const { username, email, password } = req.body;
+
+  User.create({ username, email, password: hashPassword })
+    .then((doc) => {
+      console.log(doc, "doc");
+      const user = {
+        username: doc.username,
+        elem: doc.elem,
+        password: doc.password,
+      };
+      console.log(user, "USER");
+      res.json(doc);
+    })
+    .catch((err) => console.log(err));
+});
+app.get("/get_all", (req, res) => {
+  User.findAll({ raw: true })
+    .then((users) => {
+      console.log(users, "users");
+      res.json(users);
+    })
+    .catch((err) => console.log(err, "err"));
+});
 /*
 User.destroy({
   where: {
@@ -80,6 +99,37 @@ User.destroy({
 });
 */
 
+app.post("/login", async (req, res) => {
+  console.log(req.body, "REQ");
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ where: { email } });
+    console.log(user, "user");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const isPassValid = bcrypt.compareSync(password, user.password);
+    if (!isPassValid) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+    const token = generateAccessToken({
+      username: user.username,
+    });
+
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (e) {
+    console.log(e);
+    res.send({ message: "Server error" });
+  }
+});
+
 app.post(
   "/register",
   [
@@ -89,34 +139,41 @@ app.post(
       "Password must be longer than 3 and shorter than 12"
     ).isLength({ min: 3, max: 12 }),
   ],
-  (req, res) => {
+  async (req, res) => {
     console.log(req.body, "REQBODY");
     const { username, email, password } = req.body;
-    const candidate = User.findOne({ email });
-    if (candidate) {
-      return res
-        .status(400)
-        .json({ message: `User with email ${email} already exist` });
-    }
-    const hashPassword = bcrypt.hash(password, 8);
+    const hashPassword = await bcrypt.hash(password, 8);
+    let answ = await User.findOne({ where: { email } })
 
-    User.create({ username, email, password: hashPassword })
-      .then((doc) => {
-        const user = {
-          id: doc.id,
-          username: doc.username,
-          elem: doc.elem,
-          password: doc.password,
-        };
-        console.log(user, "USER");
+      .then((candidate) => {
+        if (candidate) {
+          return res
+            .status(400)
+            .json({ message: `User with email ${email} already exist` });
+        } else {
+          User.create({ username, email, password: hashPassword })
+            .then((doc) => {
+              console.log(doc, "doc");
+              const token = generateAccessToken({
+                username: req.body.username,
+              });
+              res.json({
+                user: {
+                  id: doc.id,
+                  username: doc.username,
+                  email: doc.email,
+                },
+                token,
+              });
+            })
+
+            .catch((err) => console.log(err, "errcreate"));
+        }
+        console.log(candidate, "candidate");
       })
-      .catch((err) => console.log(err));
-
-    //const user = new User({username, email, password: hashPassword})
-    //user.save()
-    const token = generateAccessToken({ username: req.body.username });
-
-    res.json(token);
+      .catch((err) => {
+        console.log(err, "err");
+      });
   }
 );
 

@@ -12,12 +12,12 @@ async function fetchFormdataPost(url, formdata) {
 }
 
 async function fetchDataPost(url, obj) {
-  const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+  console.log(obj, "obj");
+  console.log(url, "url");
   try {
     let response = await fetch(url, {
       method: "POST",
       headers: {
-        "X-CSRFToken": csrftoken,
         "Content-type": "application/json",
       },
       body: JSON.stringify(obj),

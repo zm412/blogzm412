@@ -7,26 +7,42 @@ import {
   fetchFormdataPost,
 } from "../../collection_func";
 
-export const RegisterPage = () => {
+export const RegisterPage = ({
+  getUser,
+  user,
+  funcBack,
+  setTokenFunc,
+  token,
+}) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [message, setMessage] = useState("");
+
+  console.log(localStorage.getItem("token"), "tokenStorage");
 
   const handleSubmit = (event) => {
-    let form = document.querySelector("#form_register");
     event.preventDefault();
-    console.log(event.target, "target");
-    const formData = new FormData(form);
-    console.log(formData, "formdata");
-    let answ = fetchFormdataPost("/register", formData);
+    fetchDataPost("/register", { username, email, password })
+      .then((doc) => {
+        if (doc.message) {
+          setMessage(doc.message);
+        } else {
+          localStorage.setItem("token", doc.token);
+          setTokenFunc(doc.token);
+          getUser(doc.user);
+          funcBack();
+        }
+        console.log(doc, "doc");
+      })
+      .catch((err) => console.log(err, "err"));
     console.log("Отправлена форма.");
-    console.log(answ, "answ");
   };
 
   return (
     <div>
       <h2>Register</h2>
+      <h5>{message}</h5>
       <form onSubmit={handleSubmit} id="form_register">
         <div className="form-group m-3">
           <input
@@ -58,16 +74,7 @@ export const RegisterPage = () => {
             placeholder="Password"
           />
         </div>
-        <div className="form-group m-3">
-          <input
-            className="form-control"
-            type="password"
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            value={passwordConfirm}
-            name="confirmation"
-            placeholder="Confirm Password"
-          />
-        </div>
+
         <input className="btn btn-primary m-3" type="submit" value="Register" />
       </form>
       Already have an account? <a href="">Log In here.</a>
