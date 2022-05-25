@@ -21,14 +21,19 @@ export const RegisterPage = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    fetchDataPost("/register", { username, email, password })
+    fetch("/register", {
+      method: "POST",
+      body: new FormData(event.target),
+    })
+      .then((resp) => resp.json())
       .then((doc) => {
         if (doc.message) {
           setMessage(doc.message);
         } else {
+          console.log(doc, "DOC");
           localStorage.setItem("token", doc.token);
+          localStorage.setItem("userid", doc.user.id);
           setTokenFunc(doc.token);
-          getUser(doc.user);
           funcBack();
         }
       })

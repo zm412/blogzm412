@@ -23,7 +23,6 @@ export const UploadForm = ({ fileData, onFileChange }) => {
           placeholder="Upload"
           name="file_item"
         />
-        <input type="submit" className="btn btn-primary mt-2 " value="Send" />
       </form>
     </div>
   );

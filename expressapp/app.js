@@ -1,4 +1,5 @@
 const hbs = require("hbs");
+const fs = require("fs");
 const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
@@ -35,7 +36,10 @@ const User = sequelize.define("user", {
 
 const Post = sequelize.define("post", {
   post_text: Sequelize.STRING,
+  file_url: Sequelize.STRING,
 });
+
+User.hasMany(Post, { onDelete: "cascade" });
 
 sequelize
   .sync()
@@ -58,12 +62,30 @@ User.create({
 
   */
 
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    console.log(err);
+
+    if (err) return res.sendStatus(403);
+
+    req.user = user;
+
+    next();
+  });
+}
+
 function generateAccessToken(username) {
   return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: "1800s" });
 }
 
 app.use(fileUpload({}));
-app.use(express.static(path.join(__dirname, "./public")));
+app.use(express.static(path.join(__dirname, "/public")));
+app.use(express.static(path.join(__dirname, "/media")));
 app.use(bodyParser.json());
 app.set("views", path.join(__dirname, "views"));
 app.engine("html", require("hbs").__express);
@@ -71,8 +93,17 @@ app.set("view engine", "html");
 
 app.get("/", (req, res) => res.render("index"));
 
+app.get("/get_posts", (req, res) => {
+  Post.findAll({ raw: true })
+    .then((posts) => {
+      //console.log(posts, "posts");
+      res.json({ posts });
+    })
+    .catch((err) => console.log(err, "err"));
+});
+
 app.get("/get_all", (req, res) => {
-  User.findAll({ raw: true })
+  Post.findAll({ raw: true })
     .then((users) => {
       console.log(users, "users");
       res.json(users);
@@ -80,9 +111,30 @@ app.get("/get_all", (req, res) => {
     .catch((err) => console.log(err, "err"));
 });
 
-app.post("/add_post", (req, res) => {
-  console.log(req.body.postText, "REQ");
-  console.log(req.files.file_item, "files");
+app.post("/add_post", authenticateToken, async (req, res) => {
+  //console.log(req.body, "REQ");
+  //console.log(req.files.file_item, "files");
+
+  User.findByPk(req.body.userid).then((doc) => {
+    console.log(doc, "doc");
+
+    try {
+      if (!fs.existsSync("media/" + req.body.userid)) {
+        fs.mkdirSync("media/" + req.body.userid);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    let storage = req.body.userid + "/" + req.files.file_item.name;
+    req.files.file_item.mv("media/" + storage);
+    Post.create({
+      post_text: req.body.postText,
+      file_url: storage,
+      userId: doc.id,
+    })
+      .then((post_item) => console.log(post_item, "item"))
+      .catch((err) => console.log(err, "err"));
+  });
 
   res.json("hello");
 });

@@ -7,7 +7,7 @@ import {
   fetchFormdataPost,
 } from "../../collection_func";
 
-export const UploadFileForm = ({ closeUpload }) => {
+export const UploadFileForm = ({ closeUpload, userid }) => {
   const [postText, setPostText] = useState("");
   const [fileData, setFileData] = React.useState(null);
 
@@ -15,14 +15,24 @@ export const UploadFileForm = ({ closeUpload }) => {
 
   let sendPost = (e) => {
     e.preventDefault();
+    console.log(userid, "userid");
+    let formdata = new FormData(e.target);
+    formdata.append("userid", userid);
     console.log(e.target, "etarget");
     fetch(`/add_post`, {
       method: "POST",
-      body: new FormData(e.target),
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formdata,
     })
       .then((resp) => resp.json())
       .then((doc) => console.log(doc, doc))
-      .catch((err) => console.log(err, "err"));
+      .catch((err) => {
+        localStorage.setItem("token", "");
+        localStorage.setItem("userid", "");
+        console.log(err, "err");
+      });
     closeUpload();
     setPostText("");
     e.target.reset();

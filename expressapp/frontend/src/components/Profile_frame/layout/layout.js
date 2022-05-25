@@ -12,15 +12,12 @@ import {
 
 export const Layout = () => {
   const [username, setUsername] = useState("");
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(localStorage.getItem("userid"));
   const [registerMode, setRegisterMode] = useState(false);
   const [loginMode, setLoginMode] = useState(false);
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-  const getUser = (user_info) => {
-    setUser(user_info);
-  };
-
+  console.log(user, "user");
   //useEffect(() => {}, [token]);
   const registerModeOf = () => setRegisterMode(false);
   const setTokenFunc = (newToken) => setToken(newToken);
@@ -32,11 +29,9 @@ export const Layout = () => {
   };
 
   const content = token ? (
-    <MainPage />
+    <MainPage user={user} />
   ) : registerMode ? (
     <RegisterPage
-      getUser={getUser}
-      user={user}
       funcBack={registerModeOf}
       token={token}
       setTokenFunc={setTokenFunc}
@@ -44,7 +39,6 @@ export const Layout = () => {
   ) : (
     <LoginPage
       registerOnFunc={registerOnHandler}
-      getUser={getUser}
       user={user}
       setTokenFunc={setTokenFunc}
       token={token}

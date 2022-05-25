@@ -15,7 +15,7 @@ services:
       context: ./expressapp/frontend/
       dockerfile: Dockerfile
     ports:
-      - "6000:6000"
+      - "6000:80"
     stdin_open: true
     command: npm run dev 
     environment:
@@ -23,6 +23,7 @@ services:
     volumes:
       - ./expressapp/frontend:/code/
       - ./expressapp/public/:/code/public/
+      - ./expressapp/media/:/code/media/
       #- /code/dist/
       #- ./djangoapp/frontend/dist:/djangoapp/frontend/dist
       #- ./djangoapp/frontend:/djangoapp/frontend
@@ -37,6 +38,7 @@ services:
     command: npm run dev 
     volumes:
       - ./expressapp:/code/
+      - ./expressapp/media:/code/media
       - ./expressapp/public:/code/public/
       - /code/node_modules
     depends_on:

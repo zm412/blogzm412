@@ -7,13 +7,7 @@ import {
   fetchFormdataPost,
 } from "../../collection_func";
 
-export const LoginPage = ({
-  registerOnFunc,
-  getUser,
-  user,
-  setTokenFunc,
-  token,
-}) => {
+export const LoginPage = ({ registerOnFunc, user, setTokenFunc, token }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -26,8 +20,8 @@ export const LoginPage = ({
           setMessage(doc.message);
         } else {
           localStorage.setItem("token", doc.token);
+          localStorage.setItem("userid", doc.user.id);
           setTokenFunc(doc.token);
-          getUser(doc.user);
         }
       })
       .catch((err) => console.log(err, "err"));
