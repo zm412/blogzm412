@@ -26,10 +26,11 @@ export const Layout = () => {
   const logoutFunc = () => {
     setToken("");
     localStorage.setItem("token", "");
+    localStorage.setItem("userid", "");
   };
 
   const content = token ? (
-    <MainPage user={user} />
+    <MainPage />
   ) : registerMode ? (
     <RegisterPage
       funcBack={registerModeOf}

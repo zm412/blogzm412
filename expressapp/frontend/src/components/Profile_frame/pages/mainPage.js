@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { UploadFileForm } from "../partials/uploadFileForm.js";
 import { PostsList } from "../partials/postsList.js";
 
-export const MainPage = ({ user }) => {
+export const MainPage = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [postsArr, setPostsArr] = useState([]);
 
@@ -12,7 +12,7 @@ export const MainPage = ({ user }) => {
     fetch("/get_posts")
       .then((resp) => resp.json())
       .then((doc) => {
-        setPostsArr(doc.posts);
+        setPostsArr(doc);
       })
       .catch((err) => console.log(err, "err"));
   };
@@ -42,9 +42,7 @@ export const MainPage = ({ user }) => {
         >
           Add post
         </button>
-        {isPosting && (
-          <UploadFileForm closeUpload={closeUpload} userid={user} />
-        )}
+        {isPosting && <UploadFileForm closeUpload={closeUpload} />}
       </div>
     </div>
   );

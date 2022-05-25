@@ -39,7 +39,17 @@ const Post = sequelize.define("post", {
   file_url: Sequelize.STRING,
 });
 
-User.hasMany(Post, { onDelete: "cascade" });
+User.hasMany(Post, {
+  onDelete: "CASCADE",
+  foreignKey: "userId",
+  sourceKey: "id",
+});
+
+Post.belongsTo(User, {
+  foreignKey: "userId",
+  targetKey: "id",
+  onDelete: "CASCADE",
+});
 
 sequelize
   .sync()
@@ -47,20 +57,6 @@ sequelize
     //console.log(result);
   })
   .catch((err) => console.log(err, "err"));
-
-/*
- 
-User.create({
-  username: "Bob",
-  password: "ddd",
-})
-  .then((res) => {
-    const user = { id: res.id, username: res.username, password: res.password };
-    console.log(user);
-  })
-  .catch((err) => console.log(err));
-
-  */
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -94,10 +90,32 @@ app.set("view engine", "html");
 app.get("/", (req, res) => res.render("index"));
 
 app.get("/get_posts", (req, res) => {
-  Post.findAll({ raw: true })
-    .then((posts) => {
-      //console.log(posts, "posts");
-      res.json({ posts });
+  User.findAll({
+    include: [
+      {
+        model: Post,
+      },
+    ],
+  })
+    .then((doc) => {
+      let all_posts = doc.reduce((total, current, i) => {
+        let posts = current.posts.map((n) => {
+          return {
+            id: n.id,
+            post_text: n.post_text,
+            file_url: n.file_url,
+            createdAt: n.createdAt,
+            user: {
+              id: current.id,
+              username: current.username,
+              email: current.email,
+            },
+          };
+        });
+
+        return total.concat(posts);
+      }, []);
+      res.json(all_posts);
     })
     .catch((err) => console.log(err, "err"));
 });
@@ -111,28 +129,42 @@ app.get("/get_all", (req, res) => {
     .catch((err) => console.log(err, "err"));
 });
 
+app.delete("/post/:id", authenticateToken, async (req, res) => {
+  console.log(req.params.id, "REQ");
+  //console.log(req.files.file_item, "files");
+
+  Post.destroy({ where: { id: req.params.id } }).then((doc) => {
+    console.log(doc, "doc");
+  });
+
+  res.json("hello");
+});
+
 app.post("/add_post", authenticateToken, async (req, res) => {
   //console.log(req.body, "REQ");
   //console.log(req.files.file_item, "files");
 
-  User.findByPk(req.body.userid).then((doc) => {
-    console.log(doc, "doc");
-
-    try {
-      if (!fs.existsSync("media/" + req.body.userid)) {
-        fs.mkdirSync("media/" + req.body.userid);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+  User.findByPk(req.body.userid).then((user) => {
+    if (!user) return console.log("User not found");
+    console.log(user, "doc");
     let storage = req.body.userid + "/" + req.files.file_item.name;
-    req.files.file_item.mv("media/" + storage);
-    Post.create({
-      post_text: req.body.postText,
-      file_url: storage,
-      userId: doc.id,
-    })
-      .then((post_item) => console.log(post_item, "item"))
+    user
+      .createPost({
+        post_text: req.body.postText,
+        file_url: storage,
+      })
+      .then((post_item) => {
+        console.log(post_item, "item");
+
+        try {
+          if (!fs.existsSync("media/" + req.body.userid)) {
+            fs.mkdirSync("media/" + req.body.userid);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        req.files.file_item.mv("media/" + storage);
+      })
       .catch((err) => console.log(err, "err"));
   });
 

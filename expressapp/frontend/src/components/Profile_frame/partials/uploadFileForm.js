@@ -7,9 +7,10 @@ import {
   fetchFormdataPost,
 } from "../../collection_func";
 
-export const UploadFileForm = ({ closeUpload, userid }) => {
+export const UploadFileForm = ({ closeUpload }) => {
   const [postText, setPostText] = useState("");
   const [fileData, setFileData] = React.useState(null);
+  const [userid, setUserid] = useState(localStorage.getItem("userid"));
 
   const onFileChange = (e) => setFileData(e.target.files[0]);
 
@@ -63,6 +64,7 @@ export const UploadFileForm = ({ closeUpload, userid }) => {
                 className="form-control"
                 id="fileUpload"
                 onChange={onFileChange}
+                accept="image/*,video/*"
                 placeholder="Upload"
                 name="file_item"
               />
