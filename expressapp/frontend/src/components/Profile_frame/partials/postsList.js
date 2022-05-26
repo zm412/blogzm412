@@ -7,7 +7,7 @@ export const PostsList = ({ postsArr }) => {
   const [message, setMessage] = useState("");
   const [newText, setNewText] = useState("");
   const [isChanging, setIsChanging] = useState(false);
-  console.log(postsArr, "postsArr");
+  const [updPostId, setUpdPostId] = useState(null);
   const userid = localStorage.getItem("userid");
   const closeUpload = () => {
     setIsChanging(false);
@@ -15,6 +15,7 @@ export const PostsList = ({ postsArr }) => {
 
   const upd_post = (e) => {
     setIsChanging(true);
+    setUpdPostId(e.target.dataset.id);
   };
 
   const dlt_post = (e) => {
@@ -26,17 +27,10 @@ export const PostsList = ({ postsArr }) => {
       },
     })
       .then((resp) => {
-        if (resp.status == 403) {
-          setMessage("Time to log in");
+        setMessage(resp.message);
+        if (resp.status == 403 || resp.status == 401) {
           localStorage.setItem("userid", "");
           localStorage.setItem("token", "");
-        }
-      })
-      .then((doc) => {
-        if (doc.message) {
-          setMessage("Time to log in");
-        } else {
-          console.log(doc, "DOC");
         }
       })
       .catch((err) => {
@@ -67,10 +61,14 @@ export const PostsList = ({ postsArr }) => {
 
         {n.user.id == userid && (
           <div>
-            <button data-id={n.id} onClick={upd_post}>
+            <button
+              className="btn btn-success m-3"
+              data-id={n.id}
+              onClick={upd_post}
+            >
               Update
             </button>
-            {isChanging && (
+            {isChanging && n.id == updPostId && (
               <UploadFileForm
                 closeUpload={closeUpload}
                 mode="update"
@@ -78,7 +76,11 @@ export const PostsList = ({ postsArr }) => {
                 postid={n.id}
               />
             )}
-            <button data-id={n.id} onClick={dlt_post}>
+            <button
+              data-id={n.id}
+              className="btn btn-success m-3"
+              onClick={dlt_post}
+            >
               Delete
             </button>
           </div>

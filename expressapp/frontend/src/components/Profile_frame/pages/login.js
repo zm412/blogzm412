@@ -25,7 +25,6 @@ export const LoginPage = ({ registerOnFunc, user, setTokenFunc, token }) => {
         }
       })
       .catch((err) => console.log(err, "err"));
-    console.log("Отправлена форма.");
   };
   return (
     <div>

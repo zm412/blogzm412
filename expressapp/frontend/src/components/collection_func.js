@@ -2,9 +2,9 @@ async function fetchFormdataPost(url, formdata) {
   try {
     let response = await fetch(url, {
       method: "POST",
+
       body: formdata,
     });
-    console.log(response, "resp");
     return await response.json();
   } catch (e) {
     console.error(e);
@@ -12,8 +12,6 @@ async function fetchFormdataPost(url, formdata) {
 }
 
 async function fetchDataPost(url, obj) {
-  console.log(obj, "obj");
-  console.log(url, "url");
   try {
     let response = await fetch(url, {
       method: "POST",

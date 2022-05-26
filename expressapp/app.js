@@ -1,4 +1,5 @@
 const hbs = require("hbs");
+const dbConfig = require("./db/db.config.js");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -9,35 +10,18 @@ const bcrypt = require("bcryptjs");
 const express = require("express");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
-const Sequelize = require("sequelize");
 dotenv.config();
 const app = express();
+const dbase = require("./db/models");
+const User = dbase.users;
+const Post = dbase.posts;
 
-const sequelize = new Sequelize("capstone_db", "zm412", "tazhbaeva1", {
-  dialect: "postgres",
-  host: "db",
-  port: "5432",
-});
-
-const User = sequelize.define("user", {
-  username: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
-  email: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
-  password: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
-});
-
-const Post = sequelize.define("post", {
-  post_text: Sequelize.STRING,
-  file_url: Sequelize.STRING,
-});
+dbase.sequelize
+  .sync()
+  .then((result) => {
+    //console.log(result);
+  })
+  .catch((err) => console.log(err, "err"));
 
 User.hasMany(Post, {
   onDelete: "CASCADE",
@@ -51,23 +35,39 @@ Post.belongsTo(User, {
   onDelete: "CASCADE",
 });
 
-sequelize
-  .sync()
-  .then((result) => {
-    //console.log(result);
-  })
-  .catch((err) => console.log(err, "err"));
+function savingFiles(req, res, next) {
+  if (req.files != null) {
+    if (req.files.file_item != null) {
+      let storage = req.body.userid + "/" + req.files.file_item.name;
+
+      try {
+        if (!fs.existsSync("media/" + req.body.userid)) {
+          fs.mkdirSync("media/" + req.body.userid);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      req.files.file_item.mv("media/" + storage);
+      req.body.file_url = storage;
+    } else if (req.body.file_url == null) {
+      req.body.file_url = null;
+    }
+  }
+  next();
+}
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (token == null) return res.sendStatus(401);
+  if (token == null)
+    return res.status(401).json({ message: "It's time to log in" });
 
   jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
     console.log(err);
 
-    if (err) return res.sendStatus(403);
+    if (err) return res.status(403).json({ message: "It's time to log in" });
 
     req.user = user;
 
@@ -122,102 +122,77 @@ app.get("/get_posts", (req, res) => {
 
 app.get("/get_all", (req, res) => {
   Post.findAll({ raw: true })
-    .then((users) => {
-      console.log(users, "users");
-      res.json(users);
-    })
-    .catch((err) => console.log(err, "err"));
+    .then((users) => res.json(users))
+    .catch((err) => res.status(400).json({ message: "Error" }));
 });
 
 app.delete("/post/:id", authenticateToken, async (req, res) => {
-  console.log(req.params.id, "REQ");
-  //console.log(req.files.file_item, "files");
-
-  Post.destroy({ where: { id: req.params.id } }).then((doc) => {
-    console.log(doc, "doc");
-  });
-
-  res.json("hello");
-});
-
-app.put("/post/:id", authenticateToken, async (req, res) => {
-  console.log(req.body, "REQ");
-
   Post.findByPk(req.params.id)
     .then((post) => {
-      if (!post) return console.log("Post not found");
-      let updatedPost = {};
+      if (!post) res.status(404).json({ message: "Post not found" });
 
-      if (req.files) {
+      if (!fs.existsSync("media/" + post.file_url)) {
         fs.unlink("media/" + post.file_url, (err) => {
           if (err) throw err; // не удалось удалить файл
           console.log("Файл успешно удалён");
         });
-        if (req.files.file_item != null) {
-          let storage = req.body.userid + "/" + req.files.file_item.name;
-
-          try {
-            if (!fs.existsSync("media/" + req.body.userid)) {
-              fs.mkdirSync("media/" + req.body.userid);
-            }
-          } catch (err) {
-            console.error(err);
-          }
-          req.files.file_item.mv("media/" + storage);
-          updatedPost.file_url = storage;
-        } else {
-          updatedPost.file_url = null;
-        }
       }
 
-      for (let key in req.body) {
-        if (key != "userid") {
-          updatedPost[key] = req.body[key];
-        }
-      }
-      console.log(updatedPost, "updatedPost");
-
-      Post.update(updatedPost, {
-        where: {
-          id: req.params.id,
-        },
-      }).then((res) => {
-        console.log(res, "res");
-      });
+      Post.destroy({ where: { id: post.id } })
+        .then((doc) => {
+          res.status(200).json({ message: "Post deleted" });
+        })
+        .catch((err) => res.status(400).json({ message: "Error" }));
     })
-    .catch((err) => console.log(err, "err"));
-  res.json("hello");
+
+    .catch((err) => res.status(400).json({ message: "Error" }));
 });
 
-app.post("/add_post", authenticateToken, async (req, res) => {
-  //console.log(req.body, "REQ");
-  //console.log(req.files.file_item, "files");
+app.put("/post/:id", authenticateToken, savingFiles, async (req, res) => {
+  Post.findByPk(req.params.id)
+    .then((post) => {
+      if (!post) res.status(404).json({ message: "Post not found" });
+      console.log(post, "post");
 
+      if (!fs.existsSync("media/" + post.file_url)) {
+        fs.unlink("media/" + post.file_url, (err) => {
+          if (err) throw err; // не удалось удалить файл
+          console.log("Файл успешно удалён");
+        });
+      }
+
+      let updatedPost = {};
+
+      for (let key in req.body) {
+        if (key != "userid") updatedPost[key] = req.body[key];
+      }
+      updatedPost.file_url = req.body.file_url;
+
+      console.log(updatedPost, "newpost");
+      Post.update(updatedPost, {
+        where: {
+          id: post.id,
+        },
+      })
+        .then((res) => res.status(200).json({ message: "Update complete" }))
+        .catch((err) => console.log(err, "err"));
+    })
+    .catch((err) => console.log(err, "err"));
+});
+
+app.post("/add_post", authenticateToken, savingFiles, async (req, res) => {
   User.findByPk(req.body.userid).then((user) => {
-    if (!user) return console.log("User not found");
-    console.log(user, "doc");
-    let storage = req.body.userid + "/" + req.files.file_item.name;
+    if (!user) res.status(404).json({ message: "User not found" });
     user
       .createPost({
         post_text: req.body.post_text,
-        file_url: storage,
+        file_url: req.body.file_url,
       })
       .then((post_item) => {
-        console.log(post_item, "item");
-
-        try {
-          if (!fs.existsSync("media/" + req.body.userid)) {
-            fs.mkdirSync("media/" + req.body.userid);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-        req.files.file_item.mv("media/" + storage);
+        return res.status(200).json({ message: "Post added" });
       })
       .catch((err) => console.log(err, "err"));
   });
-
-  res.json("hello");
 });
 
 app.post("/login", async (req, res) => {
@@ -290,7 +265,6 @@ app.post(
 
             .catch((err) => console.log(err, "errcreate"));
         }
-        console.log(candidate, "candidate");
       })
       .catch((err) => {
         console.log(err, "err");

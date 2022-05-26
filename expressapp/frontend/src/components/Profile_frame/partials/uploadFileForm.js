@@ -18,12 +18,12 @@ export const UploadFileForm = ({
   const [isFileChanged, setIsFileChanged] = React.useState(false);
   const [postId, setPostId] = React.useState(postid);
   const [userid, setUserid] = useState(localStorage.getItem("userid"));
+  const [message, setMessage] = useState("");
 
   const onFileChange = (e) => {
     setIsFileChanged(true);
     setFileData(e.target.files[0]);
   };
-  console.log(mode, "mode");
 
   let updPost = (e) => {
     e.preventDefault();
@@ -40,14 +40,14 @@ export const UploadFileForm = ({
       body: formdata,
     })
       .then((resp) => {
-        if (resp.status == 403) {
+        setMessage(resp.message);
+        if (resp.status == 403 || resp.status == 401) {
           localStorage.setItem("userid", "");
           localStorage.setItem("token", "");
         }
         return resp.json();
       })
       .then((doc) => {
-        console.log(doc, "doc");
         if (doc.message) {
         } else {
         }
@@ -59,10 +59,8 @@ export const UploadFileForm = ({
 
   let sendPost = (e) => {
     e.preventDefault();
-    console.log(userid, "userid");
     let formdata = new FormData(e.target);
     formdata.append("userid", userid);
-    console.log(e.target, "etarget");
     fetch(`/add_post`, {
       method: "POST",
       headers: {
@@ -70,23 +68,29 @@ export const UploadFileForm = ({
       },
       body: formdata,
     })
-      .then((resp) => resp.json())
-      .then((doc) => console.log(doc, doc))
+      .then((resp) => {
+        setMessage(resp.message);
+        if (resp.status == 403 || resp.status == 401) {
+          localStorage.setItem("userid", "");
+          localStorage.setItem("token", "");
+        }
+        return resp.json();
+      })
+      .then((doc) => {})
       .catch((err) => {
-        localStorage.setItem("token", "");
-        localStorage.setItem("userid", "");
         console.log(err, "err");
       });
+
     closeUpload();
     setPostText("");
     e.target.reset();
   };
 
   let submitFunc = mode == "create" ? sendPost : updPost;
-  console.log(submitFunc, "submitF");
 
   return (
     <div>
+      <h1 style={{ color: "red" }}>{message}</h1>
       <div className="row mt-5">
         <div id="id_type_category">
           <div id="id_form">

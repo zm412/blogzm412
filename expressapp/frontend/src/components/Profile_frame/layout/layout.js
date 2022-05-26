@@ -4,11 +4,6 @@ import { useState, useEffect } from "react";
 import { LoginPage } from "../pages/login.js";
 import { RegisterPage } from "../pages/register.js";
 import { MainPage } from "../pages/mainPage.js";
-import {
-  fetchDataPost,
-  fetchDataGet,
-  fetchFormdataPost,
-} from "../../collection_func";
 
 export const Layout = () => {
   const [username, setUsername] = useState("");
@@ -17,8 +12,6 @@ export const Layout = () => {
   const [loginMode, setLoginMode] = useState(false);
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-  console.log(user, "user");
-  //useEffect(() => {}, [token]);
   const registerModeOf = () => setRegisterMode(false);
   const setTokenFunc = (newToken) => setToken(newToken);
 
