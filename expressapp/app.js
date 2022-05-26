@@ -140,6 +140,55 @@ app.delete("/post/:id", authenticateToken, async (req, res) => {
   res.json("hello");
 });
 
+app.put("/post/:id", authenticateToken, async (req, res) => {
+  console.log(req.body, "REQ");
+
+  Post.findByPk(req.params.id)
+    .then((post) => {
+      if (!post) return console.log("Post not found");
+      let updatedPost = {};
+
+      if (req.files) {
+        fs.unlink("media/" + post.file_url, (err) => {
+          if (err) throw err; // не удалось удалить файл
+          console.log("Файл успешно удалён");
+        });
+        if (req.files.file_item != null) {
+          let storage = req.body.userid + "/" + req.files.file_item.name;
+
+          try {
+            if (!fs.existsSync("media/" + req.body.userid)) {
+              fs.mkdirSync("media/" + req.body.userid);
+            }
+          } catch (err) {
+            console.error(err);
+          }
+          req.files.file_item.mv("media/" + storage);
+          updatedPost.file_url = storage;
+        } else {
+          updatedPost.file_url = null;
+        }
+      }
+
+      for (let key in req.body) {
+        if (key != "userid") {
+          updatedPost[key] = req.body[key];
+        }
+      }
+      console.log(updatedPost, "updatedPost");
+
+      Post.update(updatedPost, {
+        where: {
+          id: req.params.id,
+        },
+      }).then((res) => {
+        console.log(res, "res");
+      });
+    })
+    .catch((err) => console.log(err, "err"));
+  res.json("hello");
+});
+
 app.post("/add_post", authenticateToken, async (req, res) => {
   //console.log(req.body, "REQ");
   //console.log(req.files.file_item, "files");
@@ -150,7 +199,7 @@ app.post("/add_post", authenticateToken, async (req, res) => {
     let storage = req.body.userid + "/" + req.files.file_item.name;
     user
       .createPost({
-        post_text: req.body.postText,
+        post_text: req.body.post_text,
         file_url: storage,
       })
       .then((post_item) => {

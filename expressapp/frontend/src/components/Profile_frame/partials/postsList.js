@@ -1,13 +1,21 @@
 import React, { Component } from "react";
 import { Button } from "react-bootstrap";
 import { useState, useEffect } from "react";
+import { UploadFileForm } from "./uploadFileForm.js";
 
 export const PostsList = ({ postsArr }) => {
   const [message, setMessage] = useState("");
+  const [newText, setNewText] = useState("");
+  const [isChanging, setIsChanging] = useState(false);
   console.log(postsArr, "postsArr");
   const userid = localStorage.getItem("userid");
+  const closeUpload = () => {
+    setIsChanging(false);
+  };
 
-  const upd_post = (e) => {};
+  const upd_post = (e) => {
+    setIsChanging(true);
+  };
 
   const dlt_post = (e) => {
     let id = e.target.dataset.id;
@@ -48,6 +56,7 @@ export const PostsList = ({ postsArr }) => {
         <p>Author: {n.user.username}</p>
         <p>Created: {n.createdAt}</p>
         <p>Text: {n.post_text}</p>
+
         {n.file_url && isImg ? (
           <img width="400px" height="400px" src={n.file_url} alt="" />
         ) : n.file_url && !isImg ? (
@@ -61,6 +70,14 @@ export const PostsList = ({ postsArr }) => {
             <button data-id={n.id} onClick={upd_post}>
               Update
             </button>
+            {isChanging && (
+              <UploadFileForm
+                closeUpload={closeUpload}
+                mode="update"
+                updText={n.post_text}
+                postid={n.id}
+              />
+            )}
             <button data-id={n.id} onClick={dlt_post}>
               Delete
             </button>

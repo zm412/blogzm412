@@ -42,7 +42,9 @@ export const MainPage = () => {
         >
           Add post
         </button>
-        {isPosting && <UploadFileForm closeUpload={closeUpload} />}
+        {isPosting && (
+          <UploadFileForm closeUpload={closeUpload} mode="create" />
+        )}
       </div>
     </div>
   );

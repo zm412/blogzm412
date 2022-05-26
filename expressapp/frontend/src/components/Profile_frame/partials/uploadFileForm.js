@@ -7,12 +7,55 @@ import {
   fetchFormdataPost,
 } from "../../collection_func";
 
-export const UploadFileForm = ({ closeUpload }) => {
-  const [postText, setPostText] = useState("");
+export const UploadFileForm = ({
+  closeUpload,
+  mode,
+  updText = "",
+  postid = "",
+}) => {
+  const [post_text, setPostText] = useState(updText);
   const [fileData, setFileData] = React.useState(null);
+  const [isFileChanged, setIsFileChanged] = React.useState(false);
+  const [postId, setPostId] = React.useState(postid);
   const [userid, setUserid] = useState(localStorage.getItem("userid"));
 
-  const onFileChange = (e) => setFileData(e.target.files[0]);
+  const onFileChange = (e) => {
+    setIsFileChanged(true);
+    setFileData(e.target.files[0]);
+  };
+  console.log(mode, "mode");
+
+  let updPost = (e) => {
+    e.preventDefault();
+    let formdata = new FormData();
+    formdata.append("post_text", post_text);
+    formdata.append("userid", userid);
+    if (isFileChanged) formdata.append("file_item", fileData);
+
+    fetch(`/post/${postId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formdata,
+    })
+      .then((resp) => {
+        if (resp.status == 403) {
+          localStorage.setItem("userid", "");
+          localStorage.setItem("token", "");
+        }
+        return resp.json();
+      })
+      .then((doc) => {
+        console.log(doc, "doc");
+        if (doc.message) {
+        } else {
+        }
+      })
+      .catch((err) => {
+        console.log(err, "err");
+      });
+  };
 
   let sendPost = (e) => {
     e.preventDefault();
@@ -39,6 +82,9 @@ export const UploadFileForm = ({ closeUpload }) => {
     e.target.reset();
   };
 
+  let submitFunc = mode == "create" ? sendPost : updPost;
+  console.log(submitFunc, "submitF");
+
   return (
     <div>
       <div className="row mt-5">
@@ -48,7 +94,7 @@ export const UploadFileForm = ({ closeUpload }) => {
             <form
               encType="multipart/form-data"
               method="post"
-              onSubmit={sendPost}
+              onSubmit={submitFunc}
             >
               <input
                 type="text"
@@ -56,8 +102,8 @@ export const UploadFileForm = ({ closeUpload }) => {
                 required
                 placeholder="add text"
                 onChange={(e) => setPostText(e.target.value)}
-                name="postText"
-                value={postText}
+                name="post_text"
+                value={post_text}
               />
               <input
                 type="file"
